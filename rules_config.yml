@@ -1,0 +1,117 @@
+custom_rules:
+- category: security
+  confidence: 0.9
+  description: Detect hardcoded passwords, API keys, and tokens
+  enabled: true
+  id: no_hardcoded_secrets
+  languages:
+  - python
+  - javascript
+  - java
+  - csharp
+  message: Hardcoded secret detected
+  name: No Hardcoded Secrets
+  pattern: (password|api_key|secret|token)\s*=\s*['\"][^'\"]+['\"]
+  severity: critical
+  suggestion: Use environment variables or secure configuration management
+- category: security
+  confidence: 0.8
+  description: Detect potential SQL injection vulnerabilities
+  enabled: true
+  id: sql_injection_risk
+  languages:
+  - python
+  - java
+  - csharp
+  - php
+  message: Potential SQL injection vulnerability
+  name: SQL Injection Prevention
+  pattern: (SELECT|INSERT|UPDATE|DELETE).*\+.*\+
+  severity: high
+  suggestion: Use parameterized queries or prepared statements
+- category: style
+  confidence: 0.9
+  description: Detect console.log statements that should be removed
+  enabled: true
+  id: console_log_production
+  languages:
+  - javascript
+  - typescript
+  message: Console log statement found
+  name: No Console Logs in Production
+  pattern: console\.(log|debug|info)
+  severity: low
+  suggestion: Remove console.log statements before production deployment
+- category: best_practice
+  confidence: 0.7
+  description: Track TODO and FIXME comments
+  enabled: true
+  id: todo_comments
+  languages:
+  - python
+  - javascript
+  - java
+  - csharp
+  - go
+  - rust
+  message: TODO comment found
+  name: TODO Comments
+  pattern: (TODO|FIXME|HACK|XXX)
+  severity: info
+  suggestion: Consider creating a ticket or addressing the TODO item
+- category: best_practice
+  confidence: 0.6
+  description: Detect functions that are too large
+  enabled: true
+  id: large_function
+  languages:
+  - python
+  message: Function appears to be very large
+  name: Function Size Limit
+  pattern: def\s+\w+\([^)]*\):\s*(?:\n\s*.*){50,}
+  severity: medium
+  suggestion: Consider breaking down large functions into smaller, more focused functions
+- category: style
+  confidence: 0.5
+  description: Detect magic numbers that should be constants
+  enabled: false
+  id: magic_numbers
+  languages:
+  - python
+  - javascript
+  - java
+  - csharp
+  message: Magic number detected
+  name: Magic Numbers
+  pattern: (?<![a-zA-Z0-9_])(42|100|1000|3600|86400)(?![a-zA-Z0-9_])
+  severity: low
+  suggestion: Consider using named constants instead of magic numbers
+- category: bug
+  confidence: 0.7
+  description: Detect operations that should have error handling
+  enabled: true
+  id: error_handling_missing
+  languages:
+  - javascript
+  - typescript
+  message: HTTP request without error handling
+  name: Missing Error Handling
+  pattern: (fetch|axios|http)\s*\([^)]+\)(?!\s*\.catch)
+  severity: medium
+  suggestion: Add error handling for HTTP requests
+- category: best_practice
+  confidence: 0.8
+  description: Detect usage of deprecated functions
+  enabled: true
+  id: deprecated_function
+  languages:
+  - javascript
+  - typescript
+  message: Deprecated function usage detected
+  name: Deprecated Function Usage
+  pattern: (escape|unescape|String\.prototype\.substr)
+  severity: medium
+  suggestion: Use modern alternatives to deprecated functions
+description: Custom coding rules for AI code review
+organization: My Organization
+version: '1.0'

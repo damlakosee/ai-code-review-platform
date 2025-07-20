@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Review Platform - Enterprise Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-black: #0f0f23;
+            --secondary-black: #1a1a2e;
+            --accent-gray: #16213e;
+            --light-gray: #e5e7eb;
+            --medium-gray: #9ca3af;
+            --dark-gray: #374151;
+            --white: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #3b82f6;
+            --shadow: rgba(0, 0, 0, 0.25);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--primary-black);
+            color: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--secondary-black);
+            border-right: 1px solid var(--accent-gray);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid var(--accent-gray);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header p {
+            font-size: 0.875rem;
+            color: var(--medium-gray);
+        }
+
+        .nav-menu {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: var(--medium-gray);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--accent-gray);
+            color: var(--white);
+            border-right: 3px solid var(--info);
+        }
+
+        .nav-item i {
+            width: 20px;
+            margin-right: 0.75rem;
+            font-size: 1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            background: var(--primary-black);
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: var(--secondary-black);
+            border-bottom: 1px solid var(--accent-gray);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-online {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-offline {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Content Sections */
+        .content-section {
+            padding: 2rem;
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--secondary-black);
+            border: 1px solid var(--accent-gray);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px var(--shadow);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .metric-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--medium-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--white);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .metric-change.positive {
+            color: var(--success);
+        }
+
+        .metric-change.negative {
+            color: var(--error);
+        }
+
+        .metric-change.neutral {
+            color: var(--medium-gray);
+        }
+
+        /* Large Cards */
+        .large-card {
+            background: var(--secondary-black);
+            border: 1px solid var(--accent-gray);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--accent-gray);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--info);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: var(--accent-gray);
+            color: var(--medium-gray);
+            border: 1px solid var(--dark-gray);
+        }
+
+        .btn-secondary:hover {
+            background: var(--dark-gray);
+            color: var(--white);
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--accent-gray);
+        }
+
+        .data-table th {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--medium-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .data-table td {
+            color: var(--white);
+        }
+
+        .data-table tr:hover {
+            background: var(--accent-gray);
+        }
+
+        /* Score Badges */
+        .score-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .score-excellent {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .score-good {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .score-poor {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--accent-gray);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-description {
+            color: var(--medium-gray);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            color: var(--medium-gray);
+            font-size: 0.75rem;
+        }
+
+        /* Language Tags */
+        .language-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .language-tag {
+            padding: 0.25rem 0.5rem;
+            background: var(--accent-gray);
+            color: var(--medium-gray);
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Loading States */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--medium-gray);
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error States */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--error);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--primary-black);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-gray);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--dark-gray);
+        }
+
+        /* Progress Bars */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--accent-gray);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--info), var(--success));
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        /* Advanced Analytics Styles */
+        .analytics-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .trend-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .security-score {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .security-score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border: 4px solid;
+        }
+
+        .export-options {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1><i class="fas fa-robot"></i> AI Code Review</h1>
+            <p>Enterprise Platform</p>
+        </div>
+        
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active" data-section="overview">
+                <i class="fas fa-chart-line"></i>
+                <span>Overview</span>
+            </a>
+            <a href="#" class="nav-item" data-section="reviews">
+                <i class="fas fa-code-branch"></i>
+                <span>Reviews</span>
+            </a>
+            <a href="#" class="nav-item" data-section="analytics">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#" class="nav-item" data-section="security">
+                <i class="fas fa-shield-alt"></i>
+                <span>Security</span>
+            </a>
+            <a href="#" class="nav-item" data-section="activity">
+                <i class="fas fa-bell"></i>
+                <span>Activity</span>
+            </a>
+            <a href="#" class="nav-item" data-section="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="page-title" id="page-title">Dashboard Overview</div>
+            <div class="status-indicators">
+                <div class="status-badge" id="connection-status">
+                    <i class="fas fa-circle"></i>
+                    <span>Connecting...</span>
+                </div>
+                <div class="status-badge status-offline" id="system-status">
+                    <i class="fas fa-server"></i>
+                    <span>System Check</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overview Section -->
+        <div class="content-section active" id="overview-section">
+            <!-- Key Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-title">Total Reviews</div>
+                        <div class="metric-icon" style="background: rgba(59, 130, 246, 0.1); color: var(--info);">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="total-reviews">0</div>
+                    <div class="metric-change neutral" id="reviews-change">
+                        <i class="fas fa-minus"></i>
+                        <span>No data yet</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-title">Average Score</div>
+                        <div class="metric-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="avg-score">0</div>
+                    <div class="metric-change neutral" id="score-change">
+                        <i class="fas fa-minus"></i>
+                        <span>No trend</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-title">Issues Found</div>
+                        <div class="metric-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="total-issues">0</div>
+                    <div class="metric-change neutral" id="issues-change">
+                        <i class="fas fa-minus"></i>
+                        <span>No data</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-title">Languages</div>
+                        <div class="metric-icon" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">
+                            <i class="fas fa-code"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="languages-count">11</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Supported</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="analytics-row">
+                <div class="large-card">
+                    <div class="card-header">
+                        <div class="card-title">Score Distribution</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="large-card">
+                    <div class="card-header">
+                        <div class="card-title">Issues by Severity</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="issuesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="content-section" id="reviews-section">
+            <div class="large-card">
+                <div class="card-header">
+                    <div class="card-title">Recent Code Reviews</div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="refreshData()">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
+                        </button>
+                        <button class="btn btn-primary" onclick="exportReviews()">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                <div id="reviews-table-container">
+                    <div class="loading">
+                        <i class="fas fa-spinner spinner"></i>
+                        Loading reviews...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="content-section" id="analytics-section">
+            <div class="analytics-row">
+                <div class="large-card">
+                    <div class="card-header">
+                        <div class="card-title">Code Quality Trends</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="trendsChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="large-card">
+                    <div class="card-header">
+                        <div class="card-title">Language Distribution</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="languagesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="large-card">
+                <div class="card-header">
+                    <div class="card-title">Performance Metrics</div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">Review Speed</div>
+                        <div class="metric-value">2.3s</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Accuracy Rate</div>
+                        <div class="metric-value">94%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 94%;"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">False Positives</div>
+                        <div class="metric-value">6%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 6%; background: var(--error);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        <div class="content-section" id="security-section">
+            <div class="analytics-row">
+                <div class="large-card">
+                    <div class="card-header">
+                        <div class="card-title">Security Score</div>
+                    </div>
+                    <div class="security-score">
+                        <div class="security-score-circle" style="border-color: var(--success); color: var(--success);" id="security-score-circle">
+                            85
+                        </div>
+                        <div style="color: var(--medium-gray);">Overall Security Rating</div>
+                        <div class="trend-indicator">
+                            <i class="fas fa-arrow-up" style="color: var(--success);"></i>
+                            <span>+5% from last month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="large-card">
+                    <div class="card-header">
+                        <div class="card-title">Vulnerability Types</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="securityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Section -->
+        <div class="content-section" id="activity-section">
+            <div class="large-card">
+                <div class="card-header">
+                    <div class="card-title">Live Activity Feed</div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="clearActivity()">
+                            <i class="fas fa-trash"></i>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="activity-feed" id="activity-feed">
+                    <div class="loading">
+                        <i class="fas fa-spinner spinner"></i>
+                        Waiting for activity...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="content-section" id="settings-section">
+            <div class="large-card">
+                <div class="card-header">
+                    <div class="card-title">System Configuration</div>
+                </div>
+                <div id="settings-content">
+                    <div class="loading">
+                        <i class="fas fa-spinner spinner"></i>
+                        Loading settings...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentSection = 'overview';
+        let isConnected = false;
+        let ws = null;
+        let activities = [];
+        let reviews = [];
+        let stats = {};
+        let charts = {};
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeNavigation();
+            initializeCharts();
+            fetchInitialData();
+            connectWebSocket();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(fetchInitialData, 30000);
+        });
+
+        // Navigation
+        function initializeNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            const sections = document.querySelectorAll('.content-section');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Remove active class from all items
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    sections.forEach(section => section.classList.remove('active'));
+                    
+                    // Add active class to clicked item
+                    item.classList.add('active');
+                    
+                    // Show corresponding section
+                    const sectionId = item.getAttribute('data-section') + '-section';
+                    const section = document.getElementById(sectionId);
+                    if (section) {
+                        section.classList.add('active');
+                        currentSection = item.getAttribute('data-section');
+                        
+                        // Update page title
+                        const pageTitle = document.getElementById('page-title');
+                        pageTitle.textContent = `Dashboard ${item.textContent.trim()}`;
+                        
+                        // Load section-specific data
+                        loadSectionData(currentSection);
+                    }
+                });
+            });
+        }
+
+        // Chart initialization
+        function initializeCharts() {
+            // Score Distribution Chart
+            const scoreCtx = document.getElementById('scoreChart');
+            if (scoreCtx) {
+                charts.scoreChart = new Chart(scoreCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Excellent (80-100)', 'Good (60-79)', 'Needs Work (<60)'],
+                        datasets: [{
+                            data: [0, 0, 0],
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#9ca3af' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Issues by Severity Chart
+            const issuesCtx = document.getElementById('issuesChart');
+            if (issuesCtx) {
+                charts.issuesChart = new Chart(issuesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['High', 'Medium', 'Low'],
+                        datasets: [{
+                            label: 'Issues',
+                            data: [0, 0, 0],
+                            backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#9ca3af' },
+                                grid: { color: '#374151' }
+                            },
+                            x: {
+                                ticks: { color: '#9ca3af' },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Initialize other charts similarly...
+            initializeSecurityChart();
+            initializeLanguagesChart();
+            initializeTrendsChart();
+        }
+
+        function initializeSecurityChart() {
+            const securityCtx = document.getElementById('securityChart');
+            if (securityCtx) {
+                charts.securityChart = new Chart(securityCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['SQL Injection', 'XSS', 'Hardcoded Secrets', 'Other'],
+                        datasets: [{
+                            data: [30, 25, 20, 25],
+                            backgroundColor: ['#ef4444', '#f59e0b', '#8b5cf6', '#6b7280']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#9ca3af' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initializeLanguagesChart() {
+            const languagesCtx = document.getElementById('languagesChart');
+            if (languagesCtx) {
+                charts.languagesChart = new Chart(languagesCtx, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Usage',
+                            data: [],
+                            backgroundColor: '#3b82f6'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: '#9ca3af' }
+                            },
+                            x: {
+                                ticks: { color: '#9ca3af' },
+                                grid: { color: '#374151' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initializeTrendsChart() {
+            const trendsCtx = document.getElementById('trendsChart');
+            if (trendsCtx) {
+                charts.trendsChart = new Chart(trendsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Average Score',
+                            data: [75, 82, 78, 85],
+                            borderColor: '#10b981',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#9ca3af' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#9ca3af' },
+                                grid: { color: '#374151' }
+                            },
+                            x: {
+                                ticks: { color: '#9ca3af' },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Data fetching
+        async function fetchInitialData() {
+            await Promise.all([
+                fetchHealth(),
+                fetchReviews(),
+                fetchStats()
+            ]);
+            updateDashboard();
+        }
+
+        async function fetchHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                updateSystemStatus(data);
+            } catch (error) {
+                console.error('Error fetching health:', error);
+                updateSystemStatus(null);
+            }
+        }
+
+        async function fetchReviews() {
+            try {
+                const response = await fetch('/api/reviews');
+                const data = await response.json();
+                reviews = data.reviews || [];
+            } catch (error) {
+                console.error('Error fetching reviews:', error);
+                reviews = [];
+            }
+        }
+
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/stats');
+                stats = await response.json();
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                stats = {};
+            }
+        }
+
+        // Update functions
+        function updateSystemStatus(health) {
+            const systemStatus = document.getElementById('system-status');
+            
+            if (health && health.status === 'healthy') {
+                systemStatus.className = 'status-badge status-online';
+                systemStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>System Healthy</span>';
+            } else {
+                systemStatus.className = 'status-badge status-offline';
+                systemStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>System Error</span>';
+            }
+        }
+
+        function updateDashboard() {
+            // Update metrics
+            document.getElementById('total-reviews').textContent = stats.total_reviews || 0;
+            document.getElementById('avg-score').textContent = stats.avg_score || 0;
+            document.getElementById('total-issues').textContent = stats.total_issues || 0;
+            
+            // Update charts
+            updateCharts();
+            updateReviewsTable();
+        }
+
+        function updateCharts() {
+            if (reviews.length > 0) {
+                // Score distribution
+                const excellent = reviews.filter(r => r.overall_score >= 80).length;
+                const good = reviews.filter(r => r.overall_score >= 60 && r.overall_score < 80).length;
+                const poor = reviews.filter(r => r.overall_score < 60).length;
+                
+                if (charts.scoreChart) {
+                    charts.scoreChart.data.datasets[0].data = [excellent, good, poor];
+                    charts.scoreChart.update();
+                }
+
+                // Issues by severity
+                const highIssues = reviews.reduce((sum, r) => sum + (r.issues_by_severity?.high || 0), 0);
+                const mediumIssues = reviews.reduce((sum, r) => sum + (r.issues_by_severity?.medium || 0), 0);
+                const lowIssues = reviews.reduce((sum, r) => sum + (r.issues_by_severity?.low || 0), 0);
+                
+                if (charts.issuesChart) {
+                    charts.issuesChart.data.datasets[0].data = [highIssues, mediumIssues, lowIssues];
+                    charts.issuesChart.update();
+                }
+
+                // Language distribution
+                if (charts.languagesChart && stats.language_distribution) {
+                    const languages = Object.keys(stats.language_distribution).slice(0, 6);
+                    const counts = languages.map(lang => stats.language_distribution[lang]);
+                    
+                    charts.languagesChart.data.labels = languages;
+                    charts.languagesChart.data.datasets[0].data = counts;
+                    charts.languagesChart.update();
+                }
+            }
+        }
+
+        function updateReviewsTable() {
+            const container = document.getElementById('reviews-table-container');
+            
+            if (reviews.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--medium-gray);">
+                        <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <div>No reviews yet</div>
+                        <div style="font-size: 0.875rem;">Create a pull request to see AI reviews here</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const tableHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>PR</th>
+                            <th>Repository</th>
+                            <th>Score</th>
+                            <th>Issues</th>
+                            <th>Languages</th>
+                            <th>Reviewed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${reviews.slice(0, 10).map(review => `
+                            <tr>
+                                <td>#${review.pr_number}</td>
+                                <td>${review.repo_name}</td>
+                                <td><span class="score-badge ${getScoreClass(review.overall_score)}">${review.overall_score}</span></td>
+                                <td>${review.total_issues}</td>
+                                <td>
+                                    <div class="language-tags">
+                                        ${review.languages_detected.slice(0, 3).map(lang => 
+                                            `<span class="language-tag">${lang}</span>`
+                                        ).join('')}
+                                    </div>
+                                </td>
+                                <td>${new Date(review.review_time).toLocaleDateString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+
+        // WebSocket connection
+        function connectWebSocket() {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = function() {
+                    isConnected = true;
+                    updateConnectionStatus(true);
+                    addActivity('system', 'Connected to live feed', new Date());
+                };
+
+                ws.onmessage = function(event) {
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleWebSocketMessage(message);
+                    } catch (error) {
+                        console.error('Error parsing WebSocket message:', error);
+                    }
+                };
+
+                ws.onclose = function() {
+                    isConnected = false;
+                    updateConnectionStatus(false);
+                    addActivity('system', 'Disconnected from live feed', new Date());
+                    
+                    // Reconnect after 3 seconds
+                    setTimeout(connectWebSocket, 3000);
+                };
+
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    updateConnectionStatus(false);
+                };
+
+            } catch (error) {
+                console.error('Error creating WebSocket:', error);
+                updateConnectionStatus(false);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const connectionStatus = document.getElementById('connection-status');
+            
+            if (connected) {
+                connectionStatus.className = 'status-badge status-online';
+                connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Live</span>';
+            } else {
+                connectionStatus.className = 'status-badge status-offline';
+                connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Offline</span>';
+            }
+        }
+
+        function handleWebSocketMessage(message) {
+            addActivity(message.type, `${message.type.replace('_', ' ')} for PR #${message.data.pr_number}`, new Date());
+            
+            if (message.type === 'review_completed') {
+                setTimeout(() => {
+                    fetchInitialData();
+                }, 1000);
+            }
+        }
+
+        function addActivity(type, message, timestamp) {
+            const activity = { type, message, timestamp };
+            activities.unshift(activity);
+            
+            if (activities.length > 20) {
+                activities = activities.slice(0, 20);
+            }
+            
+            updateActivityFeed();
+        }
+
+        function updateActivityFeed() {
+            const feedContainer = document.getElementById('activity-feed');
+            
+            if (activities.length === 0) {
+                feedContainer.innerHTML = `
+                    <div class="loading">
+                        <i class="fas fa-clock"></i>
+                        Waiting for activity...
+                    </div>
+                `;
+                return;
+            }
+            
+            const feedHTML = activities.map(activity => {
+                const iconClass = getActivityIcon(activity.type);
+                const iconColor = getActivityColor(activity.type);
+                
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background: ${iconColor};">
+                            <i class="${iconClass}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.message}</div>
+                            <div class="activity-time">${activity.timestamp.toLocaleTimeString()}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            feedContainer.innerHTML = feedHTML;
+        }
+
+        // Utility functions
+        function getScoreClass(score) {
+            if (score >= 80) return 'score-excellent';
+            if (score >= 60) return 'score-good';
+            return 'score-poor';
+        }
+
+        function getActivityIcon(type) {
+            const icons = {
+                'review_started': 'fas fa-play',
+                'review_completed': 'fas fa-check',
+                'review_error': 'fas fa-times',
+                'system': 'fas fa-info-circle'
+            };
+            return icons[type] || 'fas fa-bell';
+        }
+
+        function getActivityColor(type) {
+            const colors = {
+                'review_started': 'var(--info)',
+                'review_completed': 'var(--success)',
+                'review_error': 'var(--error)',
+                'system': 'var(--medium-gray)'
+            };
+            return colors[type] || 'var(--medium-gray)';
+        }
+
+        function loadSectionData(section) {
+            switch(section) {
+                case 'settings':
+                    loadSettings();
+                    break;
+                case 'security':
+                    loadSecurityData();
+                    break;
+                // Add other section loaders as needed
+            }
+        }
+
+        function loadSettings() {
+            const settingsContent = document.getElementById('settings-content');
+            
+            fetch('/health')
+                .then(response => response.json())
+                .then(data => {
+                    settingsContent.innerHTML = `
+                        <div class="success-message">
+                            <i class="fas fa-check-circle"></i>
+                            System is healthy and configured
+                        </div>
+                        
+                        <div style="margin-top: 2rem;">
+                            <h4 style="margin-bottom: 1rem; color: var(--white);">Configuration Status</h4>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-title">GitHub Integration</div>
+                                    <div class="metric-value" style="color: var(--success); font-size: 1.5rem;">✓</div>
+                                    <div style="color: var(--medium-gray); font-size: 0.875rem;">${data.components.github_token}</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-title">OpenAI Integration</div>
+                                    <div class="metric-value" style="color: var(--success); font-size: 1.5rem;">✓</div>
+                                    <div style="color: var(--medium-gray); font-size: 0.875rem;">${data.components.openai_key}</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-title">Webhook Security</div>
+                                    <div class="metric-value" style="color: var(--success); font-size: 1.5rem;">✓</div>
+                                    <div style="color: var(--medium-gray); font-size: 0.875rem;">${data.components.webhook_secret}</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-title">Active Connections</div>
+                                    <div class="metric-value">${data.active_connections || 0}</div>
+                                    <div style="color: var(--medium-gray); font-size: 0.875rem;">WebSocket clients</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 2rem;">
+                            <h4 style="margin-bottom: 1rem; color: var(--white);">Supported Languages</h4>
+                            <div class="language-tags">
+                                ${(data.supported_languages || []).map(lang => 
+                                    `<span class="language-tag">${lang}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    settingsContent.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Error loading settings: ${error.message}
+                        </div>
+                    `;
+                });
+        }
+
+        function loadSecurityData() {
+            // This would load real security metrics in a production environment
+            // For now, we'll show static data
+        }
+
+        // Action functions
+        function refreshData() {
+            fetchInitialData();
+            addActivity('system', 'Data refreshed manually', new Date());
+        }
+
+        function exportReviews() {
+            if (reviews.length === 0) {
+                alert('No reviews to export');
+                return;
+            }
+            
+            const csvData = reviews.map(review => ({
+                'PR Number': review.pr_number,
+                'Repository': review.repo_name,
+                'Score': review.overall_score,
+                'Total Issues': review.total_issues,
+                'Languages': review.languages_detected.join(', '),
+                'Review Time': new Date(review.review_time).toISOString()
+            }));
+            
+            const csv = convertToCSV(csvData);
+            downloadCSV(csv, 'code-reviews.csv');
+            
+            addActivity('system', 'Reviews exported to CSV', new Date());
+        }
+
+        function convertToCSV(data) {
+            const headers = Object.keys(data[0]).join(',');
+            const rows = data.map(row => Object.values(row).join(',')).join('\n');
+            return headers + '\n' + rows;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function clearActivity() {
+            activities = [];
+            updateActivityFeed();
+        }
+    </script>
+</body>
+</html>
